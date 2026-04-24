@@ -51,8 +51,6 @@ namespace StarterAssets
         [Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
         public float FallTimeout = 0.15f;
 
-        public float CastTimeOut = 1.5f;
-
         [Header("Player Grounded")]
         [Tooltip("If the character is grounded or not. Not part of the CharacterController built in grounded check")]
         public bool Grounded = true;
@@ -93,7 +91,6 @@ namespace StarterAssets
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
-        private bool _isCasting;
 
         // timeout deltatime
         private float _jumpTimeoutDelta;
@@ -115,6 +112,10 @@ namespace StarterAssets
         private bool _serverAnalog = false;
         private float _serverCamRotation;
         private bool _serverCast;
+
+        //shooting params
+        [SerializeField] GameObject _castPrefab;
+        [SerializeField] private float _castTimeOut = 1.5f;
 
 
 #if ENABLE_INPUT_SYSTEM 
@@ -169,7 +170,7 @@ namespace StarterAssets
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
-            _castTimeOutDelta = CastTimeOut;
+            _castTimeOutDelta = _castTimeOut;
         }
 
         private void Update()
@@ -248,9 +249,6 @@ namespace StarterAssets
 
         private void Move()
         {
-            if (_isCasting)
-                return;
-
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _serverSprint ? SprintSpeed : MoveSpeed;
 
@@ -319,27 +317,18 @@ namespace StarterAssets
 
         private void Cast()
         {
-            Debug.Log(_input.cast);
             if(_serverCast && _castTimeOutDelta <= 0.0f)
             {
-                _isCasting = true;
-                _animator.SetBool("Cast", true);
-                StartCoroutine(EndCast());
-                _castTimeOutDelta = CastTimeOut;
+                _castTimeOutDelta = _castTimeOut;
+                _serverCast = false;
+                GameObject cast = Instantiate(_castPrefab, CinemachineCameraTarget.transform.position, CinemachineCameraTarget.transform.rotation);
+                cast.GetComponent<NetworkObject>().Spawn();
+                ResetClientCastClientRpc();
             }
             if (_castTimeOutDelta >= 0.0f)
             {
                 _castTimeOutDelta -= Time.deltaTime;
             }
-        }
-
-        IEnumerator EndCast()
-        {
-            yield return new WaitForSeconds(1f);
-            _serverCast = false;
-            _animator.SetBool("Cast", false);
-            _isCasting = false;
-            ResetClientCastClientRpc();
         }
 
         [ClientRpc]
