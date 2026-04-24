@@ -1061,6 +1061,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  cast: 0
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
@@ -1203,6 +1204,7 @@ MonoBehaviour:
   look: {x: 0, y: 0}
   jump: 0
   sprint: 0
+  cast: 0
   analogMovement: 0
   cursorLocked: 1
   cursorInputForLook: 1
@@ -1261,6 +1263,7 @@ MonoBehaviour:
   Gravity: -15
   JumpTimeout: 0.3
   FallTimeout: 0.15
+  CastTimeOut: 1
   Grounded: 1
   GroundedOffset: -0.14
   GroundedRadius: 0.28
@@ -1358,6 +1361,10 @@ MonoBehaviour:
       NameHash: 1939466105
       Synchronize: 1
       ParameterType: 1
+    - name: Cast
+      NameHash: -1299573048
+      Synchronize: 1
+      ParameterType: 4
   AnimatorParametersExpanded: 0
 --- !u!1 &2713371036070933430
 GameObject:

@@ -40,9 +40,9 @@ public class ClientPlayerMove : NetworkBehaviour
     }
 
     [ServerRpc]
-    public void UpdateInputServerRpc(Vector2 move, Vector2 look, bool jump, bool sprint, float camRotation)
+    public void UpdateInputServerRpc(Vector2 move, Vector2 look, bool jump, bool sprint, float camRotation, bool cast)
     {
-        m_ThirdPersonController.SetServerInput(move, look, jump, sprint, camRotation);
+        m_ThirdPersonController.SetServerInput(move, look, jump, sprint, camRotation, cast);
     }
 
     private void Update()
@@ -50,6 +50,6 @@ public class ClientPlayerMove : NetworkBehaviour
         if (!IsOwner)
             return;
 
-        UpdateInputServerRpc(m_StarterAssetsInputs.move, m_StarterAssetsInputs.look, m_StarterAssetsInputs.jump, m_StarterAssetsInputs.sprint, _mainCamera.transform.eulerAngles.y);
+        UpdateInputServerRpc(m_StarterAssetsInputs.move, m_StarterAssetsInputs.look, m_StarterAssetsInputs.jump, m_StarterAssetsInputs.sprint, _mainCamera.transform.eulerAngles.y, m_StarterAssetsInputs.cast);
     }
 }

@@ -1,5 +1,6 @@
 using UnityEngine;
-#if ENABLE_INPUT_SYSTEM 
+using System.Collections;
+#if ENABLE_INPUT_SYSTEM
 using UnityEngine.InputSystem;
 using Unity.Netcode;
 #endif
@@ -50,6 +51,8 @@ namespace StarterAssets
         [Tooltip("Time required to pass before entering the fall state. Useful for walking down stairs")]
         public float FallTimeout = 0.15f;
 
+        public float CastTimeOut = 1.5f;
+
         [Header("Player Grounded")]
         [Tooltip("If the character is grounded or not. Not part of the CharacterController built in grounded check")]
         public bool Grounded = true;
@@ -90,10 +93,12 @@ namespace StarterAssets
         private float _rotationVelocity;
         private float _verticalVelocity;
         private float _terminalVelocity = 53.0f;
+        private bool _isCasting;
 
         // timeout deltatime
         private float _jumpTimeoutDelta;
         private float _fallTimeoutDelta;
+        private float _castTimeOutDelta;
 
         // animation IDs
         private int _animIDSpeed;
@@ -109,6 +114,7 @@ namespace StarterAssets
         private bool _serverSprint;
         private bool _serverAnalog = false;
         private float _serverCamRotation;
+        private bool _serverCast;
 
 
 #if ENABLE_INPUT_SYSTEM 
@@ -163,6 +169,7 @@ namespace StarterAssets
             // reset our timeouts on start
             _jumpTimeoutDelta = JumpTimeout;
             _fallTimeoutDelta = FallTimeout;
+            _castTimeOutDelta = CastTimeOut;
         }
 
         private void Update()
@@ -175,6 +182,7 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
+            Cast();
         }
 
         private void LateUpdate()
@@ -228,17 +236,21 @@ namespace StarterAssets
                 _cinemachineTargetYaw, 0.0f);
         }
 
-        public void SetServerInput(Vector2 move, Vector2 look, bool jump, bool sprint, float camRot)
+        public void SetServerInput(Vector2 move, Vector2 look, bool jump, bool sprint, float camRot, bool cast)
         {
             _serverMove = move;
             _serverLook = look;
             _serverJump = jump;
             _serverSprint = sprint;
             _serverCamRotation = camRot;
+            _serverCast = cast;
         }
 
         private void Move()
         {
+            if (_isCasting)
+                return;
+
             // set target speed based on move speed, sprint speed and if sprint is pressed
             float targetSpeed = _serverSprint ? SprintSpeed : MoveSpeed;
 
@@ -303,6 +315,37 @@ namespace StarterAssets
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
             }
+        }
+
+        private void Cast()
+        {
+            Debug.Log(_input.cast);
+            if(_serverCast && _castTimeOutDelta <= 0.0f)
+            {
+                _isCasting = true;
+                _animator.SetBool("Cast", true);
+                StartCoroutine(EndCast());
+                _castTimeOutDelta = CastTimeOut;
+            }
+            if (_castTimeOutDelta >= 0.0f)
+            {
+                _castTimeOutDelta -= Time.deltaTime;
+            }
+        }
+
+        IEnumerator EndCast()
+        {
+            yield return new WaitForSeconds(1f);
+            _serverCast = false;
+            _animator.SetBool("Cast", false);
+            _isCasting = false;
+            ResetClientCastClientRpc();
+        }
+
+        [ClientRpc]
+        private void ResetClientCastClientRpc()
+        {
+            _input.cast = false;
         }
 
         private void JumpAndGravity()
