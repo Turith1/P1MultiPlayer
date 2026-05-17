@@ -1,0 +1,31 @@
+using UnityEngine;
+using TMPro;
+
+public class LobbyController : MonoBehaviour
+{
+
+    [SerializeField]
+    TMP_InputField lobbyCodeInput;
+
+    LobbyManager lobbyManager;
+
+    private void Start()
+    {
+        lobbyManager = FindFirstObjectByType<LobbyManager>();
+    }
+
+    public async void CreateLobby()
+    {
+        await lobbyManager.CreateLobby();
+    }
+
+    public async void JoinLobby()
+    {
+        await lobbyManager.JoinLobby(lobbyCodeInput.text);
+    }
+
+    public void QuitGame()
+    {
+        Application.Quit();
+    }
+}
