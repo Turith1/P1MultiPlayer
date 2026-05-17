@@ -21,6 +21,7 @@ public class LobbyController : MonoBehaviour
 
     public async void JoinLobby()
     {
+        Debug.Log(lobbyCodeInput.text);
         await lobbyManager.JoinLobby(lobbyCodeInput.text);
     }
 
