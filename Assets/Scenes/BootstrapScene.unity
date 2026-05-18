@@ -427,6 +427,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: acf257bdeef8e4445bf67f264eb04f9c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::LobbyManager
+  IsHost: 0
 --- !u!1 &1332257114
 GameObject:
   m_ObjectHideFlags: 0
