@@ -111,7 +111,6 @@ namespace StarterAssets
         private bool _serverSprint;
         private bool _serverAnalog = false;
         private float _serverCamRotation;
-        private bool _serverCast;
 
         //shooting params
         [SerializeField] GameObject _castPrefab;
@@ -183,7 +182,6 @@ namespace StarterAssets
             JumpAndGravity();
             GroundedCheck();
             Move();
-            Cast();
         }
 
         private void LateUpdate()
@@ -237,14 +235,13 @@ namespace StarterAssets
                 _cinemachineTargetYaw, 0.0f);
         }
 
-        public void SetServerInput(Vector2 move, Vector2 look, bool jump, bool sprint, float camRot, bool cast)
+        public void SetServerInput(Vector2 move, Vector2 look, bool jump, bool sprint, float camRot)
         {
             _serverMove = move;
             _serverLook = look;
             _serverJump = jump;
             _serverSprint = sprint;
             _serverCamRotation = camRot;
-            _serverCast = cast;
         }
 
         private void Move()
@@ -313,28 +310,6 @@ namespace StarterAssets
                 _animator.SetFloat(_animIDSpeed, _animationBlend);
                 _animator.SetFloat(_animIDMotionSpeed, inputMagnitude);
             }
-        }
-
-        private void Cast()
-        {
-            if(_serverCast && _castTimeOutDelta <= 0.0f)
-            {
-                _castTimeOutDelta = _castTimeOut;
-                _serverCast = false;
-                GameObject cast = Instantiate(_castPrefab, CinemachineCameraTarget.transform.position, CinemachineCameraTarget.transform.rotation);
-                cast.GetComponent<NetworkObject>().Spawn();
-                ResetClientCastClientRpc();
-            }
-            if (_castTimeOutDelta >= 0.0f)
-            {
-                _castTimeOutDelta -= Time.deltaTime;
-            }
-        }
-
-        [ClientRpc]
-        private void ResetClientCastClientRpc()
-        {
-            _input.cast = false;
         }
 
         private void JumpAndGravity()
@@ -410,6 +385,12 @@ namespace StarterAssets
         [ClientRpc]
         private void ResetClientJumpClientRpc()
         {
+            if (!IsOwner)
+                return;
+
+            if (_input == null)
+                return;
+
             _input.jump = false;
         }
 

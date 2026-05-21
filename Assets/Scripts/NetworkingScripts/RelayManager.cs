@@ -42,7 +42,7 @@ public class RelayManager : MonoBehaviour
             allocation.ConnectionData
         );
 
-        NetworkManager.Singleton.StartHost();
+        //NetworkManager.Singleton.StartHost();
 
         return joinCode;
     }
@@ -61,6 +61,6 @@ public class RelayManager : MonoBehaviour
             allocation.HostConnectionData
         );
 
-        NetworkManager.Singleton.StartClient();
+        //NetworkManager.Singleton.StartClient();
     }
 }

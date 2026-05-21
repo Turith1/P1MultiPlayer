@@ -44,11 +44,6 @@ namespace StarterAssets
 		{
 			SprintInput(value.isPressed);
 		}
-
-		public void OnCast(InputValue value)
-        {
-			CastInput(value.isPressed);
-        }
 #endif
 
 
@@ -72,14 +67,9 @@ namespace StarterAssets
 			sprint = newSprintState;
 		}
 
-		public void CastInput(bool newCastState)
-        {
-			cast = newCastState;
-        }
-
 		private void OnApplicationFocus(bool hasFocus)
 		{
-			SetCursorState(cursorLocked);
+			//SetCursorState(cursorLocked);
 		}
 
 		private void SetCursorState(bool newState)

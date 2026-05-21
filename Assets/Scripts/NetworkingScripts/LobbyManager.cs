@@ -4,6 +4,7 @@ using Unity.Services.Lobbies.Models;
 using System.Threading.Tasks;
 using UnityEngine.SceneManagement;
 using System.Collections.Generic;
+using Unity.Netcode;
 
 public class LobbyManager : MonoBehaviour
 {
@@ -12,6 +13,7 @@ public class LobbyManager : MonoBehaviour
     public Lobby currentLobby;
 
     public bool IsHost;
+    private bool heartbeatRunning;
 
     private void Awake()
     {
@@ -40,6 +42,10 @@ public class LobbyManager : MonoBehaviour
             // 1. Create Relay
             string relayCode = await RelayManager.Instance.CreateRelay(4);
 
+            NetworkManager.Singleton.StartHost();
+
+            HeartBeat();
+
             // 2. Store relay code inside Lobby data (VERY important)
             var updateOptions = new UpdateLobbyOptions
             {
@@ -58,9 +64,10 @@ public class LobbyManager : MonoBehaviour
             await LobbyService.Instance.UpdateLobbyAsync(currentLobby.Id, updateOptions);
 
             // 3. Load lobby scene (NGO already running)
-            SceneManager.LoadScene("LobbyScene");
+            //SceneManager.LoadScene("LobbyScene");
+            NetworkManager.Singleton.SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
 
-            LobbyManager.Instance.IsHost = true;
+            IsHost = true;
         }
         catch (LobbyServiceException e)
         {
@@ -79,13 +86,16 @@ public class LobbyManager : MonoBehaviour
             // 1. Get relay code from lobby
             string relayCode = currentLobby.Data["relayCode"].Value;
 
-            // 2. Load lobby scene first (optional but cleaner UX)
-            SceneManager.LoadScene("LobbyScene");
-
             // 3. Join Relay (NGO client starts here)
             await RelayManager.Instance.JoinRelay(relayCode);
 
-            LobbyManager.Instance.IsHost = false;
+            NetworkManager.Singleton.StartClient();
+
+            IsHost = false;
+
+            // 2. Load lobby scene first (optional but cleaner UX)
+            //SceneManager.LoadScene("LobbyScene");
+            //NetworkManager.Singleton.SceneManager.LoadScene("LobbyScene", LoadSceneMode.Single);
         }
         catch (LobbyServiceException e)
         {
@@ -95,10 +105,63 @@ public class LobbyManager : MonoBehaviour
 
     async void HeartBeat()
     {
-        while(currentLobby != null)
+        if (heartbeatRunning)
+            return;
+
+        heartbeatRunning = true;
+
+        while (currentLobby != null)
         {
             await LobbyService.Instance.SendHeartbeatPingAsync(currentLobby.Id);
             await Task.Delay(15000);
         }
+
+        heartbeatRunning = false;
+    }
+
+    public bool AreAllPlayersReady()
+    {
+        foreach (var client in NetworkManager.Singleton.ConnectedClientsList)
+        {
+            if (client.ClientId == NetworkManager.Singleton.LocalClientId)
+                continue;
+
+            if (client.PlayerObject == null)
+                return false;
+
+            PlayerLobbyState playerState =
+                client.PlayerObject.GetComponent<PlayerLobbyState>();
+
+            if (playerState == null)
+                return false;
+
+            if (!playerState.IsReady.Value)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+
+    public void TryStartGame()
+    {
+        Debug.Log("HOST TRYING TO START GAME");
+        Debug.Log($"Players ready: {AreAllPlayersReady()}");
+
+        if (!NetworkManager.Singleton.IsHost)
+            return;
+
+        if (!AreAllPlayersReady())
+        {
+            Debug.Log("Not everyone is ready.");
+            return;
+        }
+
+        NetworkManager.Singleton.SceneManager.LoadScene(
+            "SampleScene",
+            LoadSceneMode.Single
+        );
     }
 }
